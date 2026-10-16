@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  :root { color-scheme: light; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  html, body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<title>Capitals de la UE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  /* Layout: tabs on top; map beside a study/quiz panel on wide screens, stacked on narrow ones; a reference table as the last tab. */
+  :root {
+    --bg: #EDF0F4;
+    --surface: #FFFFFF;
+    --ink: #16202B;
+    --muted: #5B6877;
+    --line: #D3D9E1;
+    --accent: #0B6E99;
+    --accent-ink: #FFFFFF;
+    --good: #1E7F4F;
+    --good-bg: #E3F3EA;
+    --bad: #B3261E;
+    --bad-bg: #FBE4E2;
+    --sea: #DCEAF4;
+    --land: #E4E2DA;
+    --halo: #FFFFFF;
+    --shadow: 0 1px 2px rgba(22, 32, 43, .06), 0 8px 24px rgba(22, 32, 43, .07);
+    --font-text: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-title: "Source Serif 4", Georgia, "Times New Roman", serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10161D; --surface: #19222C; --ink: #E7EDF3; --muted: #9BA8B6; --line: #2B3744;
+      --accent: #5BB6E0; --accent-ink: #06202E; --good: #6FD09B; --good-bg: #17301F;
+      --bad: #F2918A; --bad-bg: #3A1B19; --sea: #1B2A38; --land: #2B333C; --halo: #10161D;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10161D; --surface: #19222C; --ink: #E7EDF3; --muted: #9BA8B6; --line: #2B3744;
+    --accent: #5BB6E0; --accent-ink: #06202E; --good: #6FD09B; --good-bg: #17301F;
+    --bad: #F2918A; --bad-bg: #3A1B19; --sea: #1B2A38; --land: #2B333C; --halo: #10161D;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--font-text); font-size: 16px; line-height: 1.5;
+    padding-block: 22px 40px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .app { max-width: 1180px; margin: 0 auto; display: grid; gap: 16px; }
+  h1 { font-family: var(--font-title); font-weight: 600; font-size: clamp(26px, 5vw, 36px); line-height: 1.15; margin: 0; }
+  .sub { color: var(--muted); margin: 4px 0 0; }
+
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tab, .chip, .btn {
+    font-family: var(--font-text); cursor: pointer; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  }
+  .tab { font-size: 16px; font-weight: 600; min-height: 44px; padding: 0 18px; border-radius: 99px; }
+  .tab[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .chip { font-size: 14.5px; font-weight: 500; min-height: 38px; padding: 0 14px; border-radius: 99px; }
+  .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn { font-size: 16.5px; font-weight: 600; min-height: 50px; padding: 0 18px; border-radius: 12px; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .tab:focus-visible, .chip:focus-visible, .btn:focus-visible, .opt:focus-visible, .pick:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  button:disabled { opacity: .45; cursor: default; }
+
+  .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 1000px) { .layout { grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr); align-items: start; } }
+
+  .mapbox { display: grid; gap: 10px; min-width: 0; }
+  .mapwrap { background: var(--sea); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; }
+  .mapwrap svg { display: block; width: 100%; min-width: 560px; height: auto; }
+  #msg { padding: 28px 20px; color: var(--ink); min-height: 200px; }
+  .maptools { display: flex; flex-wrap: wrap; gap: 8px; }
+  .zones { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; color: var(--muted); }
+  .zones span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; flex: none; }
+
+  /* Map layers */
+  .sea { fill: var(--sea); }
+  .cty { stroke: var(--halo); stroke-width: .7; stroke-linejoin: round; transition: opacity .2s; }
+  .cty.non { fill: var(--land); }
+  .hit { fill: transparent; stroke: none; }
+  .has-sel .cty:not(.sel) { opacity: .4; }
+  .cty.sel { stroke: var(--ink); stroke-width: 2.4; }
+  .cty.ok { stroke: var(--good); stroke-width: 3.4; opacity: 1; }
+  .cty.bad { stroke: var(--bad); stroke-width: 3.4; opacity: 1; }
+  .cty.eu { cursor: pointer; }
+  .nm, .cn { font-family: var(--font-text); fill: var(--ink); paint-order: stroke; stroke: var(--halo); stroke-width: 2.6px; stroke-linejoin: round; pointer-events: none; }
+  .nm { font-size: 11.5px; font-weight: 600; letter-spacing: .6px; text-anchor: middle; }
+  .nm.non { font-size: 10.5px; font-weight: 500; fill: var(--muted); }
+  .cn { font-size: 13px; font-weight: 600; }
+  .hide-names .nm { display: none; }
+  .cap { display: none; pointer-events: none; }
+  .mode-study .cap, .cap.show { display: inline; }
+  .cap .cn { display: none; }
+  .mode-study:not(.hide-caps) .cap .cn, .cap.named .cn { display: inline; }
+  .dot { fill: var(--ink); stroke: var(--halo); stroke-width: 1; }
+  .ring { fill: none; stroke-width: 3; display: none; }
+  .cap.sel .ring { display: inline; stroke: var(--accent); }
+  .cap.ok .ring { display: inline; stroke: var(--good); }
+  .cap.bad .ring { display: inline; stroke: var(--bad); }
+  .clickmark { fill: var(--bad); stroke: var(--halo); stroke-width: 1.5; }
+
+  .panel { display: grid; gap: 12px; min-width: 0; align-content: start; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 18px; display: grid; gap: 10px; }
+  .card h2 { font-family: var(--font-title); font-weight: 600; font-size: 26px; line-height: 1.2; margin: 0; display: flex; align-items: center; gap: 10px; }
+  .card p { margin: 0; }
+  .zone { font-size: 13.5px; font-weight: 600; color: var(--muted); }
+  .capline { font-family: var(--font-title); font-size: 22px; font-weight: 600; }
+  .lbl { color: var(--muted); font-size: 13.5px; font-weight: 600; margin: 0; }
+  .nota { background: var(--bg); border-radius: 8px; padding: 8px 12px; font-size: 15px; }
+  .hint { color: var(--muted); }
+
+  .picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+  .pick { display: flex; align-items: center; gap: 8px; text-align: left; font: 500 15px/1.2 var(--font-text); color: var(--ink);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-height: 40px; padding: 6px 10px; cursor: pointer; }
+  .pick[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+
+  .rowchips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .counts { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .counts .main { color: var(--ink); font-weight: 600; margin-right: auto; }
+  .q { font-family: var(--font-title); font-weight: 600; font-size: clamp(22px, 3.4vw, 28px); line-height: 1.3; margin: 0; text-wrap: balance; }
+  .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 420px) { .opts { grid-template-columns: 1fr; } }
+  .opt { font: 600 17px/1.2 var(--font-text); min-height: 56px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+  .opt.ok { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+  .opt.bad { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+  .opt:disabled { opacity: 1; cursor: default; }
+  .opt:disabled:not(.ok):not(.bad) { opacity: .5; }
+  .fb { border-radius: 10px; padding: 10px 14px; border: 1px solid var(--line); }
+  .fb.ok { background: var(--good-bg); border-color: var(--good); }
+  .fb.bad { background: var(--bad-bg); border-color: var(--bad); }
+  .done ul { margin: 0; padding-left: 1.2em; display: grid; gap: 2px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  .tablewrap { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 15px; }
+  th, td { text-align: left; padding: 8px 12px; vertical-align: top; border-bottom: 1px solid var(--line); }
+  th { font-size: 13.5px; color: var(--muted); font-weight: 600; background: var(--bg); }
+  tr.zrow td { background: var(--bg); font-weight: 600; }
+  td.c1 { font-weight: 600; white-space: nowrap; }
+  td.cap1 { font-family: var(--font-title); font-weight: 600; white-space: nowrap; }
+  .foot { color: var(--muted); font-size: 13.5px; margin: 0; }
+
+  @media (prefers-reduced-motion: reduce) { .cty { transition: none; } }
+</style>
+
+</head>
+<body>
+<main class="app">
+  <header>
+    <h1>Capitals de la UE</h1>
+    <p class="sub">Els 27 països membres amb la seva capital i on són. Estudia-ho al mapa i comprova què en saps.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Mode">
+    <button class="tab" role="tab" type="button" data-mode="study" aria-selected="true">Estudiar</button>
+    <button class="tab" role="tab" type="button" data-mode="capq" aria-selected="false">Preguntes</button>
+    <button class="tab" role="tab" type="button" data-mode="locate" aria-selected="false">Situa-ho</button>
+    <button class="tab" role="tab" type="button" data-mode="list" aria-selected="false">Llista</button>
+  </nav>
+
+  <div class="layout" id="layout">
+    <section class="mapbox">
+      <div class="mapwrap"><div id="map"><div id="msg">Carregant el mapa…</div></div></div>
+      <div class="maptools" id="maptools">
+        <button class="chip" id="tNames" type="button" aria-pressed="true">Noms dels països</button>
+        <button class="chip" id="tCaps" type="button" aria-pressed="true">Noms de les capitals</button>
+      </div>
+      <div class="zones" id="zones"></div>
+      <p class="foot">Fronteres simplificades. Són els 27 països de la UE actual: el Regne Unit va sortir el 2020.</p>
+    </section>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </div>
+
+  <section id="listView" hidden>
+    <div class="tablewrap"><table id="tbl"></table></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var W = 1000, H = 1040;
+
+  var REG = {
+    nord: { n: "Europa nòrdica", c: "#2E6DB4" },
+    balt: { n: "Països bàltics", c: "#2FA39A" },
+    occ: { n: "Europa occidental", c: "#D9822B" },
+    cen: { n: "Europa central", c: "#8A63B8" },
+    sud: { n: "Europa meridional", c: "#D2504F" },
+    est: { n: "Sud-est d'Europa", c: "#6E9F2F" }
+  };
+  var ZONES = ["nord", "balt", "occ", "cen", "sud", "est"];
+
+  // id ISO3, nom, capital, [lon, lat] de la capital, zona, on és el país, limita amb, on és la capital,
+  // posició del nom del país [lon, lat], etiqueta de la capital [ancoratge, dx, dy], nota opcional
+  var C = [
+    { id: "DEU", n: "Alemanya", cap: "Berlín", ll: [13.40, 52.52], z: "cen",
+      loc: "Al centre d'Europa, entre el mar del Nord i la Bàltica al nord i els Alps al sud.",
+      lim: "Dinamarca, Polònia, Txèquia, Àustria, Suïssa, França, Luxemburg, Bèlgica i Països Baixos.",
+      cloc: "al nord-est del país, prop de la frontera amb Polònia.", nl: [9.3, 50.9], la: ["start", 7, -4] },
+    { id: "AUT", n: "Àustria", cap: "Viena", ll: [16.37, 48.21], z: "cen",
+      loc: "A l'interior d'Europa central, als Alps, sense mar.",
+      lim: "Alemanya, Txèquia, Eslovàquia, Hongria, Eslovènia, Itàlia, Suïssa i Liechtenstein.",
+      cloc: "a l'est del país, al Danubi.", nl: [13.9, 47.3], la: ["end", -8, -7] },
+    { id: "BEL", n: "Bèlgica", cap: "Brussel·les", ll: [4.35, 50.85], z: "occ",
+      loc: "A la costa del mar del Nord, entre França, els Països Baixos i Alemanya.",
+      lim: "Països Baixos, Alemanya, Luxemburg i França.",
+      cloc: "al centre del país.", nl: [3.7, 50.3], la: ["end", -7, 12],
+      nota: "Brussel·les és la seu de la Comissió Europea i del Consell de la UE." },
+    { id: "BGR", n: "Bulgària", cap: "Sofia", ll: [23.32, 42.70], z: "est",
+      loc: "Als Balcans, amb costa a la mar Negra.",
+      lim: "Romania, Sèrbia, Macedònia del Nord, Grècia i Turquia.",
+      cloc: "a l'oest del país.", nl: [25.6, 43.3], la: ["start", 7, 6] },
+    { id: "HRV", n: "Croàcia", cap: "Zagreb", ll: [15.98, 45.81], z: "sud",
+      loc: "Als Balcans, amb una llarga costa a l'Adriàtic.",
+      lim: "Eslovènia, Hongria, Sèrbia, Bòsnia i Hercegovina i Montenegro.",
+      cloc: "al nord-oest del país.", nl: [17.4, 45.0], la: ["start", 7, 5] },
+    { id: "CYP", n: "Xipre", cap: "Nicòsia", ll: [33.38, 35.17], z: "sud",
+      loc: "Illa a l'est de la Mediterrània, davant de Turquia, Síria i el Líban.",
+      lim: "Cap frontera amb un altre país (és una illa).",
+      cloc: "al centre de l'illa.", nl: [33.6, 35.95], la: ["end", -7, 14],
+      nota: "Nicòsia està dividida per una línia de separació: el nord és a la part ocupada per Turquia." },
+    { id: "CZE", n: "Txèquia", cap: "Praga", ll: [14.42, 50.08], z: "cen",
+      loc: "A l'interior d'Europa central, sense mar.",
+      lim: "Alemanya, Polònia, Eslovàquia i Àustria.",
+      cloc: "a l'oest del país, al riu Moldava.", nl: [16.0, 49.6], la: ["end", -7, -5] },
+    { id: "DNK", n: "Dinamarca", cap: "Copenhaguen", ll: [12.57, 55.68], z: "nord",
+      loc: "Península de Jutlàndia i illes entre el mar del Nord i la Bàltica.",
+      lim: "Només Alemanya, per terra.",
+      cloc: "a l'illa de Selàndia, a l'est, davant de Suècia.", nl: [9.0, 56.7], la: ["end", -7, -3] },
+    { id: "EST", n: "Estònia", cap: "Tallin", ll: [24.75, 59.44], z: "balt",
+      loc: "Al nord dels països bàltics, a la costa del golf de Finlàndia.",
+      lim: "Letònia i Rússia.",
+      cloc: "al nord, a la costa.", nl: [25.9, 58.6], la: ["start", 6, -5] },
+    { id: "FIN", n: "Finlàndia", cap: "Hèlsinki", ll: [24.94, 60.17], z: "nord",
+      loc: "Al nord d'Europa, entre Suècia i Rússia, amb molts llacs.",
+      lim: "Suècia, Noruega i Rússia.",
+      cloc: "al sud, a la costa del golf de Finlàndia.", nl: [26.5, 63.8], la: ["start", 7, -5] },
+    { id: "FRA", n: "França", cap: "París", ll: [2.35, 48.86], z: "occ",
+      loc: "A l'oest d'Europa, amb costa a l'Atlàntic i a la Mediterrània.",
+      lim: "Bèlgica, Luxemburg, Alemanya, Suïssa, Itàlia, Mònaco, Espanya i Andorra.",
+      cloc: "al nord, al riu Sena.", nl: [2.4, 46.9], la: ["end", -7, 4] },
+    { id: "GRC", n: "Grècia", cap: "Atenes", ll: [23.73, 37.98], z: "sud",
+      loc: "Al sud dels Balcans: una península i milers d'illes entre la mar Jònica i l'Egea.",
+      lim: "Albània, Macedònia del Nord, Bulgària i Turquia.",
+      cloc: "al sud-est de la part continental.", nl: [21.9, 39.3], la: ["start", 7, 5] },
+    { id: "HUN", n: "Hongria", cap: "Budapest", ll: [19.04, 47.50], z: "cen",
+      loc: "A la conca del Danubi, a l'interior d'Europa central.",
+      lim: "Eslovàquia, Ucraïna, Romania, Sèrbia, Croàcia, Eslovènia i Àustria.",
+      cloc: "al nord del país, al Danubi.", nl: [18.3, 46.4], la: ["start", 8, 15] },
+    { id: "IRL", n: "Irlanda", cap: "Dublín", ll: [-6.26, 53.35], z: "occ",
+      loc: "Illa a l'oest de la Gran Bretanya, a l'Atlàntic.",
+      lim: "Només Irlanda del Nord (Regne Unit).",
+      cloc: "a la costa est.", nl: [-8.3, 52.4], la: ["end", -7, 0] },
+    { id: "ITA", n: "Itàlia", cap: "Roma", ll: [12.50, 41.90], z: "sud",
+      loc: "Península en forma de bota al centre de la Mediterrània, amb Sicília i Sardenya.",
+      lim: "França, Suïssa, Àustria i Eslovènia (i els enclavaments de San Marino i el Vaticà).",
+      cloc: "al centre-oest de la península, al riu Tíber.", nl: [11.2, 43.9], la: ["start", 7, 4] },
+    { id: "LVA", n: "Letònia", cap: "Riga", ll: [24.11, 56.95], z: "balt",
+      loc: "Al centre dels països bàltics, a la mar Bàltica.",
+      lim: "Estònia, Lituània, Rússia i Bielorússia.",
+      cloc: "a la costa, al golf de Riga.", nl: [25.3, 57.6], la: ["start", 7, 3] },
+    { id: "LTU", n: "Lituània", cap: "Vílnius", ll: [25.28, 54.69], z: "balt",
+      loc: "Al sud dels països bàltics.",
+      lim: "Letònia, Bielorússia, Polònia i Rússia (Kaliningrad).",
+      cloc: "al sud-est, prop de Bielorússia.", nl: [23.4, 55.3], la: ["start", 7, 3] },
+    { id: "LUX", n: "Luxemburg", cap: "Luxemburg", ll: [6.13, 49.61], z: "occ",
+      loc: "Petit país sense mar entre Bèlgica, França i Alemanya.",
+      lim: "Bèlgica, Alemanya i França.",
+      cloc: "al sud del país.", la: ["start", 7, 12],
+      nota: "La capital té el mateix nom que el país." },
+    { id: "MLT", n: "Malta", cap: "la Valletta", ll: [14.51, 35.90], z: "sud",
+      loc: "Arxipèlag a la Mediterrània central, al sud de Sicília.",
+      lim: "Cap frontera (és una illa).",
+      cloc: "a la costa nord-est de l'illa de Malta.", nl: [14.3, 35.0], la: ["start", 6, 14],
+      nota: "La Valletta és la capital més petita de la UE." },
+    { id: "NLD", n: "Països Baixos", cap: "Amsterdam", ll: [4.90, 52.37], z: "occ",
+      loc: "A la costa del mar del Nord, amb gran part del terreny per sota del nivell del mar.",
+      lim: "Bèlgica i Alemanya.",
+      cloc: "a l'oest del país.", nl: [3.4, 54.2], la: ["end", -7, -4],
+      nota: "Amsterdam és la capital, però el govern i el parlament són a La Haia." },
+    { id: "POL", n: "Polònia", cap: "Varsòvia", ll: [21.01, 52.23], z: "cen",
+      loc: "Al nord d'Europa central, amb costa a la mar Bàltica.",
+      lim: "Alemanya, Txèquia, Eslovàquia, Ucraïna, Bielorússia, Lituània i Rússia (Kaliningrad).",
+      cloc: "a l'est del centre del país, al riu Vístula.", nl: [18.3, 52.7], la: ["start", 7, 0] },
+    { id: "PRT", n: "Portugal", cap: "Lisboa", ll: [-9.14, 38.72], z: "sud",
+      loc: "A l'oest de la península Ibèrica, a la costa atlàntica.",
+      lim: "Només Espanya.",
+      cloc: "a la costa, a la desembocadura del Tajo.", nl: [-8.1, 40.9], la: ["end", -7, 3] },
+    { id: "ROU", n: "Romania", cap: "Bucarest", ll: [26.10, 44.43], z: "est",
+      loc: "Al sud-est d'Europa, entre els Carpats i la mar Negra.",
+      lim: "Ucraïna, Moldàvia, Bulgària, Sèrbia i Hongria.",
+      cloc: "al sud del país, prop del Danubi.", nl: [24.8, 45.9], la: ["start", 7, 3] },
+    { id: "SVK", n: "Eslovàquia", cap: "Bratislava", ll: [17.11, 48.15], z: "cen",
+      loc: "A l'interior d'Europa central, als Carpats, sense mar.",
+      lim: "Txèquia, Polònia, Ucraïna, Hongria i Àustria.",
+      cloc: "a l'extrem sud-oest, al Danubi, a prop de Viena.", nl: [19.8, 49.2], la: ["start", 8, -9] },
+    { id: "SVN", n: "Eslovènia", cap: "Ljubljana", ll: [14.51, 46.06], z: "sud",
+      loc: "Entre els Alps i l'Adriàtic, amb una petita sortida al mar.",
+      lim: "Itàlia, Àustria, Hongria i Croàcia.",
+      cloc: "al centre del país.", nl: [13.3, 45.3], la: ["end", -8, 9] },
+    { id: "ESP", n: "Espanya", cap: "Madrid", ll: [-3.70, 40.42], z: "sud",
+      loc: "Al sud-oest d'Europa, a la península Ibèrica, amb costa a l'Atlàntic i a la Mediterrània.",
+      lim: "Portugal, França i Andorra (i el Marroc a Ceuta i Melilla).",
+      cloc: "al centre de la península.", nl: [-4.6, 38.7], la: ["start", 7, 3] },
+    { id: "SWE", n: "Suècia", cap: "Estocolm", ll: [18.07, 59.33], z: "nord",
+      loc: "A la península escandinava, a la mar Bàltica.",
+      lim: "Noruega i Finlàndia.",
+      cloc: "a la costa est, al sud del país.", nl: [15.5, 62.0], la: ["start", 7, 3] }
+  ];
+  var BYID = {};
+  C.forEach(function (c) { BYID[c.id] = c; });
+  var OTHER = [
+    ["REGNE UNIT", -1.8, 54.4], ["NORUEGA", 9.0, 61.2], ["SUÏSSA", 8.2, 46.8], ["BIELORÚSSIA", 28.0, 53.7],
+    ["UCRAÏNA", 31.5, 49.6], ["RÚSSIA", 33.3, 58.8], ["SÈRBIA", 20.9, 44.1], ["BÒSNIA", 17.9, 44.0],
+    ["ALBÀNIA", 20.0, 41.1], ["TURQUIA", 32.5, 39.5]
+  ];
+
+  /* ---------- Utilitats ---------- */
+  function $(id) { return document.getElementById(id); }
+  function h(tag, props) {
+    var e = document.createElement(tag);
+    if (props) {
+      for (var k in props) {
+        var v = props[k];
+        if (v === false || v == null) continue;
+        if (k === "class") e.className = v;
+        else if (k === "text") e.textContent = v;
+        else if (k.indexOf("on") === 0) e.addEventListener(k.slice(2), v);
+        else e.setAttribute(k, v === true ? "" : v);
+      }
+    }
+    var kids = Array.prototype.slice.call(arguments, 2);
+    (function add(list) {
+      list.forEach(function (x) {
+        if (x == null || x === false) return;
+        if (Array.isArray(x)) add(x);
+        else e.appendChild(typeof x === "string" ? document.createTextNode(x) : x);
+      });
+    })(kids);
+    return e;
+  }
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function de(c) {
+    if (c.id === "NLD") return "dels Països Baixos";
+    return /^[AEIOUÀÈÉÍÒÓÚHaeiouàèéíòóúh]/.test(c.n) ? "d'" + c.n : "de " + c.n;
+  }
+
+  var KEY = "capitals-ue-v1";
+  var missed = {};
+  try {
+    var raw = localStorage.getItem(KEY);
+    if (raw) { var arr = JSON.parse(raw); if (Array.isArray(arr)) arr.forEach(function (x) { if (BYID[x]) missed[x] = 1; }); }
+  } catch (e) {}
+  function saveMissed() { try { localStorage.setItem(KEY, JSON.stringify(Object.keys(missed))); } catch (e) {} }
+  function missedCount() { return Object.keys(missed).length; }
+
+  /* ---------- Estat ---------- */
+  var mode = "study", sel = null, showNames = true, showCaps = true;
+  var opts = { dir: "p2c", kind: "cap", src: "all" };
+  var R = null;
+  var map = null;
+  var panel = $("panel");
+
+  /* ---------- Mapa ---------- */
+  function features(topo, obj) {
+    var tr = topo.transform;
+    var arcs = topo.arcs.map(function (a) {
+      var x = 0, y = 0;
+      return a.map(function (p) {
+        x += p[0]; y += p[1];
+        return tr ? [x * tr.scale[0] + tr.translate[0], y * tr.scale[1] + tr.translate[1]] : [x, y];
+      });
+    });
+    function arc(i) { return i < 0 ? arcs[~i].slice().reverse() : arcs[i].slice(); }
+    function ring(ids) {
+      var pts = [];
+      ids.forEach(function (i, k) { var a = arc(i); if (k > 0) a.shift(); pts = pts.concat(a); });
+      return pts;
+    }
+    var out = [];
+    obj.geometries.forEach(function (g) {
+      var coords;
+      if (g.type === "Polygon") coords = g.arcs.map(ring);
+      else if (g.type === "MultiPolygon") coords = g.arcs.map(function (poly) { return poly.map(ring); });
+      else return;
+      out.push({ type: "Feature", id: g.id, properties: g.properties || {}, geometry: { type: g.type, coordinates: coords } });
+    });
+    return out;
+  }
+
+  function drawMap() {
+    var topo = Datamap.prototype.worldTopo;
+    var feats = features(topo, topo.objects.world);
+    var proj = d3.geo.conicConformal().rotate([-13, 0]).center([0, 52]).parallels([40, 62]).scale(1).translate([0, 0]);
+    var samples = [[-10, 35], [-10, 70], [36, 70], [36, 35], [13, 34], [13, 71], [-10, 52], [36, 52]];
+    var xs = [], ys = [];
+    samples.forEach(function (p) { var q = proj(p); xs.push(q[0]); ys.push(q[1]); });
+    var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+    var y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+    var k = Math.min(W / (x1 - x0), H / (y1 - y0));
+    proj.scale(k).translate([(W - k * (x0 + x1)) / 2, (H - k * (y0 + y1)) / 2]);
+    var path = d3.geo.path().projection(proj);
+
+    var host = $("map");
+    host.textContent = "";
+    var svg = d3.select(host).append("svg")
+      .attr("viewBox", "0 0 " + W + " " + H).attr("role", "img")
+      .attr("aria-label", "Mapa polític d'Europa amb els països de la UE");
+    var node = svg.node();
+    node.setAttribute("class", "mode-study");
+
+    svg.append("defs").append("clipPath").attr("id", "frame").append("rect").attr("width", W).attr("height", H);
+    var root = svg.append("g").attr("clip-path", "url(#frame)");
+    root.append("rect").attr("class", "sea").attr("width", W).attr("height", H);
+
+    var gC = root.append("g");
+    feats.forEach(function (f) {
+      var c = BYID[f.id];
+      var p = gC.append("path").attr("d", path(f)).attr("data-id", f.id).attr("class", c ? "cty eu" : "cty non");
+      if (c) p.style("fill", REG[c.z].c);
+    });
+    // Malta és massa petita: marcador visible i zona de toc més gran
+    var mt = proj(BYID.MLT.ll);
+    gC.append("circle").attr("cx", mt[0]).attr("cy", mt[1]).attr("r", 6).attr("data-id", "MLT")
+      .attr("class", "cty eu").style("fill", REG.sud.c);
+    gC.append("circle").attr("cx", mt[0]).attr("cy", mt[1]).attr("r", 15).attr("data-id", "MLT").attr("class", "hit cty-hit");
+
+    var gN = root.append("g");
+    C.forEach(function (c) {
+      if (!c.nl) return;
+      var p = proj(c.nl);
+      gN.append("text").attr("class", "nm").attr("x", p[0]).attr("y", p[1]).text(c.n.toUpperCase());
+    });
+    OTHER.forEach(function (o) {
+      var p = proj([o[1], o[2]]);
+      gN.append("text").attr("class", "nm non").attr("x", p[0]).attr("y", p[1]).text(o[0]);
+    });
+
+    var gK = root.append("g");
+    C.forEach(function (c) {
+      c.xy = proj(c.ll);
+      var g = gK.append("g").attr("class", "cap").attr("data-id", c.id);
+      g.append("circle").attr("class", "ring").attr("cx", c.xy[0]).attr("cy", c.xy[1]).attr("r", 10);
+      g.append("circle").attr("class", "dot").attr("cx", c.xy[0]).attr("cy", c.xy[1]).attr("r", 3.2);
+      g.append("text").attr("class", "cn").attr("x", c.xy[0] + c.la[1]).attr("y", c.xy[1] + c.la[2])
+        .attr("text-anchor", c.la[0]).text(c.cap);
+    });
+    var gM = root.append("g");
+
+    var onPick = null;
+    function svgPoint(e) {
+      var pt = node.createSVGPoint();
+      pt.x = e.clientX; pt.y = e.clientY;
+      var m = node.getScreenCTM();
+      return m ? pt.matrixTransform(m.inverse()) : { x: 0, y: 0 };
+    }
+    node.addEventListener("click", function (e) {
+      if (!onPick) return;
+      var el = e.target.closest ? e.target.closest("[data-id]") : null;
+      var id = el && !el.classList.contains("cap") ? el.getAttribute("data-id") : null;
+      var p = svgPoint(e);
+      onPick({ id: id, x: p.x, y: p.y });
+    });
+
+    function polys(id) { return node.querySelectorAll('.cty[data-id="' + id + '"]'); }
+    return {
+      reset: function () {
+        node.classList.remove("has-sel");
+        var all = node.querySelectorAll(".sel,.ok,.bad,.show,.named");
+        for (var i = 0; i < all.length; i++) all[i].classList.remove("sel", "ok", "bad", "show", "named");
+        gM.selectAll("*").remove();
+      },
+      setMode: function (m) { node.classList.toggle("mode-study", m === "study"); node.classList.toggle("mode-quiz", m !== "study"); },
+      setNames: function (v) { node.classList.toggle("hide-names", !v); },
+      setCaps: function (v) { node.classList.toggle("hide-caps", !v); },
+      mark: function (id, cls) {
+        var ps = polys(id);
+        for (var i = 0; i < ps.length; i++) {
+          ps[i].classList.add(cls);
+          if (ps[i].parentNode) ps[i].parentNode.appendChild(ps[i]);
+        }
+        if (cls === "sel") node.classList.add("has-sel");
+      },
+      cap: function (id, cls, named) {
+        var g = node.querySelector('.cap[data-id="' + id + '"]');
+        if (!g) return;
+        g.classList.add("show");
+        if (cls) g.classList.add(cls);
+        if (named) g.classList.add("named");
+      },
+      click: function (x, y) {
+        gM.append("circle").attr("class", "clickmark").attr("cx", x).attr("cy", y).attr("r", 6);
+      },
+      setPick: function (fn) { onPick = fn; }
+    };
+  }
+
+  /* ---------- Càrrega de les llibreries ---------- */
+  var log = [];
+  function fail(t) {
+    var m = $("msg");
+    if (m) m.textContent = t + (log.length ? " [" + log.join(" | ") + "]" : "");
+  }
+  function load(src) {
+    return new Promise(function (res, rej) {
+      var s = document.createElement("script");
+      s.src = src;
+      s.onload = function () { res(src); };
+      s.onerror = function () { log.push("no carrega " + src.split("/").slice(-2).join("/")); rej(new Error(src)); };
+      document.head.appendChild(s);
+    });
+  }
+  function tryEach(list) {
+    var p = Promise.reject(new Error("start"));
+    list.forEach(function (u) { p = p.catch(function () { return load(u); }); });
+    return p;
+  }
+  tryEach([
+    "https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js",
+    "https://cdn.jsdelivr.net/npm/d3@3.5.17/d3.min.js"
+  ]).then(function () {
+    return tryEach([
+      "https://cdn.jsdelivr.net/npm/datamaps@0.5.9/dist/datamaps.world.hires.min.js",
+      "https://cdn.jsdelivr.net/npm/datamaps@0.5.9/dist/datamaps.world.min.js"
+    ]);
+  }).then(function () {
+    if (!window.d3 || !window.Datamap || !window.Datamap.prototype.worldTopo) throw new Error("dades no accessibles");
+    map = drawMap();
+    showMode();
+  }).catch(function (e) {
+    fail("No s'ha pogut carregar el mapa. Les preguntes de capitals i la llista funcionen igualment.");
+  });
+
+  /* ---------- Vistes ---------- */
+  function chips(list) {
+    return h("div", { class: "rowchips" }, list.map(function (it) {
+      return h("button", { class: "chip", type: "button", "aria-pressed": String(!!it.on), disabled: !!it.off, onclick: it.fn, text: it.t });
+    }));
+  }
+  function btn(label, cls, fn) { return h("button", { class: "btn " + (cls || ""), type: "button", onclick: fn, text: label }); }
+
+  function showMode() {
+    $("layout").hidden = mode === "list";
+    $("listView").hidden = mode !== "list";
+    $("maptools").hidden = mode !== "study";
+    $("zones").hidden = mode === "list";
+    if (map) {
+      map.reset();
+      map.setMode(mode === "study" ? "study" : "quiz");
+      map.setNames(mode === "study" && showNames);
+      map.setCaps(mode === "study" && showCaps);
+      map.setPick(null);
+    }
+    panel.textContent = "";
+    if (mode === "study") viewStudy();
+    else if (mode === "capq") viewCapQ();
+    else if (mode === "locate") viewLocate();
+  }
+
+  function enter(m) {
+    mode = m; sel = null; R = null;
+    var tabs = document.querySelectorAll(".tab");
+    for (var i = 0; i < tabs.length; i++) tabs[i].setAttribute("aria-selected", String(tabs[i].getAttribute("data-mode") === m));
+    if (m === "capq" || m === "locate") startRound();
+    showMode();
+  }
+
+  /* Estudiar */
+  function select(id) { sel = id; showMode(); }
+  function viewStudy() {
+    var c = sel ? BYID[sel] : null;
+    if (map) {
+      map.setPick(function (p) { if (p.id && BYID[p.id]) select(p.id); });
+      if (c) { map.mark(c.id, "sel"); map.cap(c.id, "sel", true); }
+    }
+    if (c) {
+      panel.appendChild(h("div", { class: "card" },
+        h("h2", null, h("span", { class: "sw", style: "background:" + REG[c.z].c + ";width:16px;height:16px" }), c.n),
+        h("p", { class: "zone", text: REG[c.z].n }),
+        h("div", null, h("p", { class: "lbl", text: "Capital" }), h("p", { class: "capline", text: c.cap })),
+        h("div", null, h("p", { class: "lbl", text: "On és la capital" }), h("p", { text: c.cap.charAt(0).toUpperCase() + c.cap.slice(1) + " és " + c.cloc })),
+        h("div", null, h("p", { class: "lbl", text: "On és el país" }), h("p", { text: c.loc })),
+        h("div", null, h("p", { class: "lbl", text: "Limita amb" }), h("p", { text: c.lim })),
+        c.nota ? h("p", { class: "nota", text: c.nota }) : null
+      ));
+    } else {
+      panel.appendChild(h("div", { class: "card" },
+        h("p", { class: "capline", text: "Toca un país" }),
+        h("p", { class: "hint", text: "Toca un país del mapa o un nom de la llista. Amaga els noms amb els botons de sota el mapa per comprovar-te a tu mateix." })
+      ));
+    }
+    var sorted = C.slice().sort(function (a, b) { return a.n.localeCompare(b.n, "ca"); });
+    panel.appendChild(h("div", { class: "picks" }, sorted.map(function (x) {
+      return h("button", { class: "pick", type: "button", "aria-pressed": String(sel === x.id), onclick: function () { select(x.id); } },
+        h("span", { class: "sw", style: "background:" + REG[x.z].c }), x.n);
+    })));
+  }
+
+  /* Rondes (Preguntes i Situa-ho) */
+  function startRound() {
+    var pool = C.map(function (c) { return c.id; });
+    if (opts.src === "missed" && missedCount() > 0) pool = pool.filter(function (id) { return missed[id]; });
+    else opts.src = "all";
+    R = { queue: shuffle(pool), i: 0, score: 0, wrong: [], answered: false, cur: null, fb: null };
+  }
+  function pickOptions(id) {
+    var me = BYID[id];
+    var others = shuffle(C.filter(function (c) { return c.id !== id; }));
+    var same = others.filter(function (c) { return c.z === me.z; }).slice(0, 2);
+    var rest = others.filter(function (c) { return same.indexOf(c) < 0; }).slice(0, 3 - same.length);
+    return shuffle([me].concat(same, rest)).map(function (c) { return c.id; });
+  }
+  function record(id, ok) {
+    if (ok) { R.score++; delete missed[id]; } else { R.wrong.push(id); missed[id] = 1; }
+    saveMissed();
+  }
+  function advance() { R.i++; R.cur = null; R.answered = false; R.fb = null; R.click = null; R.tapped = null; R.chosen = null; showMode(); }
+
+  function srcChips() {
+    return chips([
+      { t: "Tots (" + C.length + ")", on: opts.src === "all", fn: function () { opts.src = "all"; startRound(); showMode(); } },
+      { t: "Només les que falles (" + missedCount() + ")", on: opts.src === "missed", off: missedCount() === 0, fn: function () { opts.src = "missed"; startRound(); showMode(); } }
+    ]);
+  }
+  function counter() {
+    return h("div", { class: "counts" },
+      h("span", { class: "main", text: "Pregunta " + (R.i + 1) + " de " + R.queue.length }),
+      h("span", { text: "Encerts: " + R.score }));
+  }
+  function feedback() {
+    if (!R.fb) return null;
+    var c = BYID[R.cur.id];
+    return h("div", { class: "fb " + (R.fb.ok ? "ok" : "bad"), role: "status" },
+      R.fb.text, c.nota ? h("div", { class: "nota", text: c.nota }) : null);
+  }
+  function nextBtn() {
+    var last = R.i >= R.queue.length - 1;
+    return btn(last ? "Veure el resultat" : "Següent", "primary", advance);
+  }
+  function summary() {
+    var n = R.queue.length;
+    panel.appendChild(h("div", { class: "card done" },
+      h("h2", { text: "Ronda acabada" }),
+      h("p", { text: "Has encertat " + R.score + " de " + n + "." }),
+      R.wrong.length
+        ? h("div", null, h("p", { class: "lbl", text: "Per repassar" }),
+            h("ul", null, R.wrong.map(function (id) { return h("li", { text: BYID[id].n + ": " + BYID[id].cap }); })))
+        : h("p", { text: "No has fallat cap. Molt bé." }),
+      h("div", { class: "row" },
+        R.wrong.length ? btn("Repassar les fallades (" + R.wrong.length + ")", "primary", function () { opts.src = "missed"; startRound(); showMode(); }) : null,
+        btn("Tornar a començar", "", function () { opts.src = "all"; startRound(); showMode(); }))
+    ));
+  }
+
+  /* Preguntes: capital <-> país */
+  function viewCapQ() {
+    if (!R) startRound();
+    if (R.i >= R.queue.length) { summary(); return; }
+    if (!R.cur) R.cur = { id: R.queue[R.i], options: pickOptions(R.queue[R.i]) };
+    var id = R.cur.id, c = BYID[id], p2c = opts.dir === "p2c";
+    if (map) {
+      if (p2c) { map.mark(id, "sel"); map.cap(id, "sel", R.answered); }
+      else { map.cap(id, "sel", R.answered); if (R.answered) map.mark(id, "sel"); }
+    }
+    panel.appendChild(chips([
+      { t: "País, capital", on: p2c, fn: function () { opts.dir = "p2c"; startRound(); showMode(); } },
+      { t: "Capital, país", on: !p2c, fn: function () { opts.dir = "c2p"; startRound(); showMode(); } }
+    ]));
+    panel.appendChild(srcChips());
+    panel.appendChild(h("div", { class: "card" },
+      counter(),
+      h("p", { class: "q", text: p2c ? "Quina és la capital " + de(c) + "?" : "De quin país és capital " + c.cap + "?" }),
+      h("div", { class: "opts" }, R.cur.options.map(function (oid) {
+        var o = BYID[oid], cls = "opt";
+        if (R.answered && oid === id) cls += " ok";
+        else if (R.answered && oid === R.chosen) cls += " bad";
+        return h("button", { class: cls, type: "button", disabled: R.answered, onclick: function () { answerCapQ(oid); }, text: p2c ? o.cap : o.n });
+      })),
+      feedback(),
+      R.answered ? nextBtn() : null
+    ));
+  }
+  function answerCapQ(choice) {
+    if (R.answered) return;
+    var id = R.cur.id, c = BYID[id], ok = choice === id;
+    R.answered = true; R.chosen = choice;
+    record(id, ok);
+    var base = c.cap.charAt(0).toUpperCase() + c.cap.slice(1) + ", capital " + de(c) + ", " + c.cloc;
+    R.fb = { ok: ok, text: (ok ? "Correcte. " : "No. Resposta correcta: ") + base };
+    showMode();
+  }
+
+  /* Situa-ho: tocar al mapa */
+  function viewLocate() {
+    if (!map) {
+      panel.appendChild(h("div", { class: "card" }, h("p", { class: "hint", text: "Aquest mode necessita el mapa. Torna a obrir la pàgina amb connexió a internet." })));
+      return;
+    }
+    if (!R) startRound();
+    if (R.i >= R.queue.length) { summary(); return; }
+    if (!R.cur) R.cur = { id: R.queue[R.i] };
+    var id = R.cur.id, c = BYID[id], cap = opts.kind === "cap";
+    map.setPick(pickLocate);
+    if (R.answered) {
+      if (cap) { map.cap(id, "ok", true); if (R.click) map.click(R.click.x, R.click.y); }
+      else { map.mark(id, "ok"); if (R.tapped && R.tapped !== id) map.mark(R.tapped, "bad"); }
+    }
+    panel.appendChild(chips([
+      { t: "Situa la capital", on: cap, fn: function () { opts.kind = "cap"; startRound(); showMode(); } },
+      { t: "Situa el país", on: !cap, fn: function () { opts.kind = "cty"; startRound(); showMode(); } }
+    ]));
+    panel.appendChild(srcChips());
+    panel.appendChild(h("div", { class: "card" },
+      counter(),
+      h("p", { class: "q", text: cap ? "Toca on és " + c.cap + "." : "Toca el país: " + c.n + "." }),
+      R.answered ? null : h("p", { class: "hint", text: cap ? "Toca el mapa on creus que és la ciutat." : "Toca el país al mapa." }),
+      feedback(),
+      R.answered ? nextBtn() : null
+    ));
+  }
+  function pickLocate(p) {
+    if (!R || R.answered || !R.cur || R.i >= R.queue.length) return;
+    var id = R.cur.id, c = BYID[id];
+    var cap = c.cap.charAt(0).toUpperCase() + c.cap.slice(1);
+    var ok, text;
+    if (opts.kind === "cty") {
+      if (!p.id) return;
+      ok = p.id === id;
+      R.tapped = p.id;
+      if (ok) text = "Correcte. " + c.loc;
+      else {
+        var t = BYID[p.id];
+        text = "Has tocat " + (t ? t.n : "un país que no és de la UE") + ". " + c.n + " és el país marcat en verd.";
+      }
+    } else {
+      var best = null, bd = 1e9;
+      C.forEach(function (k) {
+        if (!k.xy) return;
+        var d = Math.hypot(k.xy[0] - p.x, k.xy[1] - p.y);
+        if (d < bd) { bd = d; best = k; }
+      });
+      ok = !!best && best.id === id && bd <= 45;
+      R.click = { x: p.x, y: p.y };
+      if (ok) text = "Correcte. " + cap + " és " + c.cloc;
+      else {
+        var near = best && best.id !== id && bd <= 45 ? best : null;
+        text = "No és aquí." + (near ? " Això és a prop de " + near.cap + "." : "") + " " + cap + " és " + c.cloc;
+      }
+    }
+    R.answered = true;
+    record(id, ok);
+    R.fb = { ok: ok, text: text };
+    showMode();
+  }
+
+  /* Llista */
+  function buildList() {
+    var t = $("tbl");
+    t.textContent = "";
+    t.appendChild(h("thead", null, h("tr", null,
+      h("th", { text: "País" }), h("th", { text: "Capital" }), h("th", { text: "On és" }), h("th", { text: "Limita amb" }))));
+    var body = h("tbody");
+    ZONES.forEach(function (z) {
+      body.appendChild(h("tr", { class: "zrow" }, h("td", { colspan: "4" },
+        h("span", { class: "sw", style: "background:" + REG[z].c + ";margin-right:8px" }), REG[z].n)));
+      C.filter(function (c) { return c.z === z; })
+        .sort(function (a, b) { return a.n.localeCompare(b.n, "ca"); })
+        .forEach(function (c) {
+          body.appendChild(h("tr", null,
+            h("td", { class: "c1", text: c.n }),
+            h("td", { class: "cap1", text: c.cap.charAt(0).toUpperCase() + c.cap.slice(1) }),
+            h("td", { text: c.loc + " La capital és " + c.cloc }),
+            h("td", { text: c.lim })));
+        });
+    });
+    t.appendChild(body);
+  }
+
+  /* ---------- Inici ---------- */
+  $("zones").appendChild(document.createDocumentFragment());
+  ZONES.forEach(function (z) {
+    $("zones").appendChild(h("span", null, h("i", { class: "sw", style: "background:" + REG[z].c }), REG[z].n));
+  });
+  buildList();
+  var tabEls = document.querySelectorAll(".tab");
+  for (var ti = 0; ti < tabEls.length; ti++) {
+    (function (el) { el.addEventListener("click", function () { enter(el.getAttribute("data-mode")); }); })(tabEls[ti]);
+  }
+  $("tNames").addEventListener("click", function () {
+    showNames = !showNames; $("tNames").setAttribute("aria-pressed", String(showNames)); if (map) map.setNames(showNames);
+  });
+  $("tCaps").addEventListener("click", function () {
+    showCaps = !showCaps; $("tCaps").setAttribute("aria-pressed", String(showCaps)); if (map) map.setCaps(showCaps);
+  });
+  showMode();
+})();
+</script>
+</body>
+</html>
